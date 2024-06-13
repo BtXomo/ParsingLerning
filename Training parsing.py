@@ -6,11 +6,29 @@ import re
 import os
 
 
+
 URL = "https://parsemachine.com/sandbox/catalog/"
 HEADERS = {
     "Accept": "*/*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:126.0) Gecko/20100101 Firefox/126.0"
 }
+
+
+def count_pages (URL,HEADERS):
+    while True:
+        NUMBER = 1
+        req = requests.get(URL + f"{NUMBER}", headers=HEADERS)
+        if req.status_code == 200:
+            NUMBER += 1
+        else:
+            NUMBER = NUMBER - 1
+            return NUMBER
+            break
+    step01(NUMBER)
+
+
+def step01(NUMBER):
+
 
 def parser(URL,HEADERS):
     req = requests.get(URL, headers = HEADERS)
