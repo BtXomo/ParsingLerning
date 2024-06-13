@@ -28,6 +28,7 @@ def count_pages (URL,HEADERS):
 
 
 def step01(NUMBER):
+    while NUMBER > 1:
 
 
 def parser(URL,HEADERS):
