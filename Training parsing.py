@@ -14,36 +14,36 @@ HEADERS = {
 }
 
 
-def count_pages (URL,HEADERS):
+def count_pages (a,b):
+    number = 1
     while True:
-        NUMBER = 1
-        req = requests.get(URL + f"{NUMBER}", headers=HEADERS)
+        req = requests.get(a + f"?page={number}", headers=b)
         if req.status_code == 200:
-            NUMBER += 1
+            number += 1
         else:
-            NUMBER = NUMBER - 1
-            return NUMBER
-            break
-    step01(NUMBER)
+            return number
 
 
-def step01(NUMBER):
-    while NUMBER > 1:
+def step01():
+    number = count_pages(URL, HEADERS)
+    for i in range(1, number):
+        url = URL + f"?page={i}"
+        parser(url, HEADERS, i)
 
 
-def parser(URL,HEADERS):
-    req = requests.get(URL, headers = HEADERS)
+def parser(URL, HEADERS, i):
+    req = requests.get(URL, headers=HEADERS)
     src = req.text
-
-
-    with open(f"index.html", "w", encoding="utf-8") as file:
+    if not os.path.exists(f"data_{i}/"):
+        os.makedirs(f"data_{i}/")
+    with open(f"data_{i}/index.html", "w", encoding="utf-8") as file:
         file.write(src)
-    step1()
+    step1(i)
 
-def step1():
-    with open(f"index.html", encoding="utf-8") as file:
+
+def step1(i):
+    with open(f"data_{i}/index.html", encoding="utf-8") as file:
         src=file.read()
-
 
     soup = BeautifulSoup(src, "lxml")
     all_products_href = soup.find_all(class_="card-title")
@@ -54,34 +54,36 @@ def step1():
         item_href = "https://parsemachine.com" + item.find("a", class_="no-hover").get("href")
         all_cat_dict[item_text] = item_href
 
-    with open("all_cat_dict.json", "w") as file:
+    with open(f"data_{i}/all_cat_dict.json", "w") as file:
         json.dump(all_cat_dict, file, indent=4, ensure_ascii=False)
-    step2()
+    step2(i)
 
-def step2():
-    with open("all_cat_dict.json") as file:
+
+def step2(i):
+    with open(f"data_{i}/all_cat_dict.json") as file:
         all_categories = json.load(file)
 
-    count = 0
+    count = 1
 
     for cat_name, cat_href in all_categories.items():
         req = requests.get(url=cat_href, headers=HEADERS)
         src = req.text
-        if not os.path.exists(f"data/{count}"):
-            os.makedirs(f"data/{count}")
-        with open(f"data/{count}/{cat_name}.html", "w", encoding="utf-8") as file:
+        if not os.path.exists(f"data_{i}/{count}"):
+            os.makedirs(f"data_{i}/{count}")
+        with open(f"data_{i}/{count}/{cat_name}.html", "w", encoding="utf-8") as file:
             file.write(src)
         count += 1
-    step3()
+    step3(i)
 
-def step3():
-    with open("all_cat_dict.json") as file:
+
+def step3(i):
+    with open(f"data_{i}/all_cat_dict.json") as file:
         all_categories = json.load(file)
 
-    count = 0
+    count = 1
 
-    for cat_name, cat_href  in all_categories.items():
-        with open(f"data/{count}/{cat_name}.html", encoding="utf-8") as file:
+    for cat_name, cat_href in all_categories.items():
+        with open(f"data_{i}/{count}/{cat_name}.html", encoding="utf-8") as file:
             src = file.read()
 
         soup = BeautifulSoup(src, "lxml")
@@ -92,15 +94,15 @@ def step3():
         articul_value = soup.find(class_="mt-4 mb-0").find(id="sku").text
         charact = soup.find(class_="col-xl-6 col-lg-7 col-md-8 col-sm-7 col-12").find_all("td")
         char = []
-        for i in charact:
-            char.append(i.text)
+        for n in charact:
+            char.append(n.text)
         charactiristics = soup.find(class_="mt-0 mb-2").find("span").text
         characteristic_value = " ".join(char)
         staf_discription = soup.find(class_="mt-4 mb-2").find("span").text.strip() + ": " + soup.find(class_="mt-4 mb-2").find(id="description").text.strip().replace("\n", " ")
         staf_discription_value = soup.find(class_="mt-4 mb-2").find(id="description").text.strip().replace("\n", " ")
         staf_discription_value = re.sub(r' +', ' ', staf_discription_value)
 
-        with open(f"data/{count}/{cat_name}.csv", "w", encoding="utf-8") as file:
+        with open(f"data_{i}/{count}/{cat_name}.csv", "w", encoding="utf-8") as file:
             writer = csv.writer(file)
             writer.writerow(
                 (
@@ -110,7 +112,6 @@ def step3():
                     staf_discription +":"+ staf_discription_value
                 )
             )
-
 
         product_info = []
 
@@ -123,24 +124,25 @@ def step3():
             }
         )
         count += 1
-    step4(product_info)
+        step4(product_info, i)
 
-def step4(product_info):
-    with open("all_cat_dict.json") as file:
+
+def step4(product_info, i):
+    with open(f"data_{i}/all_cat_dict.json") as file:
         all_categories = json.load(file)
 
-    count = 0
+    count = 1
 
     for cat_name, cat_href  in all_categories.items():
-        with open(f"data/{count}/{cat_name}.html", encoding="utf-8") as file:
+        with open(f"data_{i}/{count}/{cat_name}.html", encoding="utf-8") as file:
             src = file.read()
 
-        with open (f"data/{count}/{cat_name}.json", "w", encoding="utf-8") as file:
+        with open (f"data_{i}/{count}/{cat_name}.json", "w", encoding="utf-8") as file:
             json.dump(product_info, file, indent=4, ensure_ascii=False)
             count += 1
 
 
 
 if __name__ == '__main__':
-    parser(URL, HEADERS)
+    step01()
 
