@@ -32,28 +32,37 @@ def st2(task_number):
         result = q.content
         soup = BeautifulSoup(result, "lxml")
         task_name = soup.find(class_="issue-link-summary").text
-        task_description = soup.find()
-        task_date = soup.find()
+        task_description = soup.find().text
+        task_date = soup.find().text
         
-        if # проверка на присутствие комментариев
-            task_comments = soup.find()
+        if # РїСЂРѕРІРµСЂРєР° РЅР° РєРѕРјРјРµРЅС‚Р°СЂРёРё
+            task_comments = soup.find().text
         else: continue
 
         os.makedirs(f"C:/{task_number}_{task_date}/")
         with open(f"C:/{task_number}/{task_name}.csv", "w", encoding="utf-8") as file:
             writer = csv.writer(file)
             writer.writerow(
-                    "Описание:" + task_description,
+                    "РћРїРёСЃР°РЅРёРµ:" + task_description,
             )
-        with open(f"C:/{task_number}/{task_name}_комментарии.csv", "w", encoding="utf-8") as file:
+        with open(f"C:/{task_number}/{task_name}_РљРѕРјРјРµРЅС‚Р°СЂРёРё.csv", "w", encoding="utf-8") as file:
             writer = csv.writer(file)
             writer.writerow(
-                    "Комvентарии:" + task_comments
+                    "РљРѕРјРјРµРЅС‚Р°СЂРёРё:" + task_comments
             )
 
-        if # проверка на присутствие файлов
-            #копирование файлов
-        else: continue
+
+            # СЃРєР°С‡РёРІР°РЅРёРµ С„Р°Р№Р»РѕРІ
+            # РїРѕР»СѓС‡Р°РµРј СЃРѕРґРµСЂР¶РёРјРѕРµ С„Р°Р№Р»Р°
+            url = 'https://www.example.com/example.pdf'
+            response = requests.get(url)
+
+            # РїСЂРѕРІРµСЂСЏРµРј СѓСЃРїРµС€РЅРѕСЃС‚СЊ Р·Р°РїСЂРѕСЃР°
+            if response.status_code == 200:
+                with open('example.pdf', 'wb') as file:
+                    file.write(response.content)
+                print('Р¤Р°Р№Р» СѓСЃРїРµС€РЅРѕ СЃРєР°С‡Р°РЅ')
+            else: continue
         
         
 
