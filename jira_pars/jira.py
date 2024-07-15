@@ -1,68 +1,105 @@
 import requests
-import csv
-import json
+from getpass import getpass
 from bs4 import BeautifulSoup
+import csv
 import os
+from datetime import time
+import urllib.request
+import re
 
 
 
-# URL = "https://project.samokat.ru/browse/MA-7607?jql=project%20%3D%20MA%20AND%20assignee%20in%20(currentUser())%20ORDER%20BY%20created%20DESC"
-URL = "https://project.samokat.ru"
-HEADERS = {
-    "accept": "*/*",
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
-}
+login = ""
+password = ""
+url = "https://project.samokat.ru/issues"
 
 
-def st1():
-    for i in range(0, 250, 50):
-        url = f"{URL} + {i}"
-        q = requests.get(url)
-        result = q.content
-        soup = BeautifulSoup(result, "lxml")
-        task_number = soup.find_all(class_="issue-link-key").text
-        st2(task_number)
+# session = requests.Session()
+with (requests.Session() as session):
+    session.auth = (login, password)
 
+    count = 1
+    for n in range(0, 250, 50):
+        # response = session.get(f"https://project.samokat.ru/issues/?jql=project%20%3D%20MA%20AND%20assignee%20in%20(currentUser())&startIndex={n}")
+        # src = response.text
+        # with open(f'index{n}.html', "w", encoding="utf-8") as file:
+        #     file.write(src)
+        with open(f"index{n}.html", encoding="utf-8") as file:
+            src = file.read()
 
-def st2(task_number):
-    for i in task_number:
-        q = requests.get(f"{URL} + i")
-        result = q.content
-        soup = BeautifulSoup(result, "lxml")
-        task_name = soup.find(class_="issue-link-summary").text
-        task_description = soup.find().text
-        task_date = soup.find().text
+        soup = BeautifulSoup(src, "lxml")
+        all_issue_link = soup.find_all("td", class_="summary")
+        # print(all_issue_link)
+        for issue in all_issue_link:
+            print(issue)
+            task_name = issue.find("p").find("a").text
+            # task_name = task_name.replace(" ", "_").replace(".", "_").replace(":", "_").replace("/", "_").replace("+", "_").replace("'", "_").replace('"', '_')
+            rep = re.compile("[^a-zA-Za-яА-я,\d]")
+            task_name = rep.sub(" ", f"{task_name}")
+            task_name = task_name.strip()
+            task_number = issue.find(class_="issue-link").get("data-issue-key")
+            task_href = f"https://project.samokat.ru" + issue.find(class_="issue-link").get("href")
+            # print(task_name)
+            # print(task_number)
+            # print(task_href)
 
-        if  # проверка на комментарии
-            task_comments = soup.find().text
-        else:
-            continue
+            session_href = session.get(task_href)
+            res_href = BeautifulSoup(session_href.content, "lxml")
 
-        os.makedirs(f"C:/{task_number}_{task_date}/")
-        with open(f"C:/{task_number}/{task_name}.csv", "w", encoding="utf-8") as file:
-            writer = csv.writer(file)
-            writer.writerow(
-                "Описание:" + task_description,
-            )
-        with open(f"C:/{task_number}/{task_name}_Комментарии.csv", "w", encoding="utf-8") as file:
-            writer = csv.writer(file)
-            writer.writerow(
-                "Комментарии:" + task_comments
-            )
+            task_date = res_href.find("time", class_="livestamp").text
+            # print(task_date)
 
-            # скачивание файлов
-            # получаем содержимое файла
-            url = 'https://www.example.com/example.pdf'
-            response = requests.get(url)
+            task_description = res_href.find("div", class_="user-content-block").find_all("p")
+            description_list = []
+            for p in task_description:
+                description_list.append(p.text.strip())
+            task_description_2 = res_href.find("div", class_="user-content-block").find_all("li")
+            for li in task_description_2:
+                description_list.append(li.text.strip())
+            # print(description_list)
 
-            # проверяем успешность запроса
-            if response.status_code == 200:
-                with open('example.pdf', 'wb') as file:
-                    file.write(response.content)
-                print('Файл успешно скачан')
-            else:
-                continue
+            # task_comment_all = res_href.find_next("div", class_="action-body flooded")
+            # print(task_comment_all)
+            # task_comment = []
+            # for comment in task_comment_all:
+            #     comment_text = ''
+            #     for p in comment.find_all('p'):
+            #         comment_text += p.text.strip() + '\n'
+            #     task_comment.append(comment_text.strip())
+            # print(task_comment)
 
+            os.makedirs(f"{task_name}_{count}")
 
-if __name__ == '__main__':
-    st1()
+            with open(f"{task_name}_{count}/{count}_{task_number}_description.csv", "w", encoding="utf-8") as file:
+                writer = csv.writer(file)
+                writer.writerow(
+                    (
+                        task_date,
+                        description_list
+                )
+                )
+            # with open(f"{task_name}/{task_number}_comment.csv", "w", encoding="utf-8") as file:
+            #     writer = csv.writer(file)
+            #     writer.writerow(
+            #         (
+            #             task_comment
+            #     )
+            #     )
+
+            download_href_list = []
+            download_href_all = res_href.find_all("a", class_="attachment-title")
+            # print(download_href_all)
+            for d in download_href_all:
+                if d:
+                    download_href = (f"https://project.samokat.ru{d.get("href")}")
+                    file_path = f"{task_name}_{count}"
+                    filename = f"{task_name}_{count}_file"
+                    # local_path = os.path.join(file_path, filename)
+                    # session.get(download_href, stream=True).content.save(local_path)
+                    r = session.get(download_href)
+                    with open(f"{task_name}_{count}/{filename}.xlsx", "wb") as code:
+                        code.write(r.content)
+                else:
+                    continue
+            # print(download_href_list)
+            count += 1

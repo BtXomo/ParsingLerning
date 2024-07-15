@@ -4,7 +4,7 @@ import requests
 
 
 
-URL = f"https://www.cian.ru/cat.php?currency=2&deal_type=sale&demolished_in_moscow_programm=0&engine_version=2&floornl=1&is_first_floor=0&maxprice=12000000&offer_type=flat"
+URL = f"https://www.cian.ru/cat.php?currency=2&deal_type=sale&demolished_in_moscow_programm=0&engine_version=2&floornl=1&is_first_floor=0&maxprice=12000000&offer_type=flat&p="
 HEADERS = {"Accept" : "*/*", "User-Agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:127.0) Gecko/20100101 Firefox/127.0"
 }
 
@@ -12,7 +12,7 @@ HEADERS = {"Accept" : "*/*", "User-Agent" : "Mozilla/5.0 (Windows NT 10.0; Win64
 def count():          #считаем колличество страниц по нашему запросу
     num = 1
     while True:
-        url = f"{URL} + {num}&region=&room2=1"
+        url = f"{URL} + {num}&room2=1"
         req = requests.get(url)
         if req.status_code == 200:
             num += 1
